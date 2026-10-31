@@ -1,0 +1,5 @@
+# Copia este archivo como terraform.tfvars e introduce tu suscripción.
+subscription_id = "00000000-0000-0000-0000-000000000000"
+project_name    = "fastapi"
+location        = "eastus2"
+

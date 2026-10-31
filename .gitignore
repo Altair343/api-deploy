@@ -12,3 +12,10 @@ build/
 *.egg-info/
 .idea/
 .vscode/
+
+!.env.example
+**/.terraform/**
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
