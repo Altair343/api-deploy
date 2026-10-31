@@ -27,3 +27,42 @@ variable "tags" {
     managed_by  = "terraform"
   }
 }
+
+variable "deploy_app" {
+  type    = bool
+  default = false
+}
+
+variable "app_secret" {
+  description = "Application key"
+  type    = string
+}
+
+
+variable "image_name" {
+  description = "Docker image name"
+  type    = string
+  default = "fastapi-api"
+}
+
+variable "image_tag" {
+  description = "Docker image tag"
+  type    = string
+  default = "1.0.0"
+}
+
+variable "db_name" {
+  description = "Database name"
+  type    = string
+}
+
+
+variable "db_admin" {
+  description = "Database user"
+  type    = string
+}
+
+variable "db_password" {
+  description = "Database password"
+  type    = string
+}

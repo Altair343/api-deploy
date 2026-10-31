@@ -1,5 +1,11 @@
-# Copia este archivo como terraform.tfvars e introduce tu suscripción.
 subscription_id = "00000000-0000-0000-0000-000000000000"
 project_name    = "fastapi"
 location        = "eastus2"
 
+deploy_app = false
+app_secret = "00000000000000000000000000000000000"
+image_name = "fastapi-api"
+image_tag  = "1.0.0"
+db_name    = "fastapidb"
+db_admin   = "apiadmin"
+db_password = "00000000Ab_"
