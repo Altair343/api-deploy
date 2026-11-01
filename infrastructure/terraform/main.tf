@@ -115,3 +115,18 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = false
   tags                = var.tags
 }
+
+# A managed identity that can be granted permissions on other resources.
+resource "azurerm_user_assigned_identity" "container_app" {
+  name                = "${var.project_name}-identity"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  tags                = var.tags
+}
+
+# Permission to download images from the ACR
+resource "azurerm_role_assignment" "acr_pull" {
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.container_app.principal_id
+}
