@@ -92,6 +92,11 @@ resource "azurerm_postgresql_flexible_server" "main" {
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
   public_network_access_enabled = false
 
+  authentication {
+    active_directory_auth_enabled = true
+    password_auth_enabled         = true
+  }
+
   depends_on = [
     azurerm_private_dns_zone_virtual_network_link.postgres
   ]
@@ -145,5 +150,104 @@ resource "azurerm_container_app_environment" "main" {
     workload_profile_type = "Consumption"
   }
 
+  tags = var.tags
+}
+
+# Azure Container App
+resource "azurerm_container_app" "api" {
+  # Allows for the creation—or non-creation—of the application.
+  count                        = var.deploy_app ? 1 : 0
+  name                         = "${var.project_name}-api"
+  resource_group_name          = azurerm_resource_group.main.name
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
+
+  # They assign the managed identity to the application and indicate 
+  # that it should be used to authenticate with ACR.
+  identity {
+    type = "UserAssigned"
+
+    identity_ids = [
+      azurerm_user_assigned_identity.container_app.id
+    ]
+  }
+
+  registry {
+    server = azurerm_container_registry.acr.login_server
+    identity = azurerm_user_assigned_identity.container_app.id
+  }
+
+
+  secret {
+    name  = "database-url"
+    value = "postgresql://${var.db_admin}:${var.db_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${var.db_name}?sslmode=require"
+  }
+
+  secret {
+    name  = "secret-key"
+    value = var.app_secret
+  }
+
+
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    http_scale_rule {
+      name                = "http-scale"
+      concurrent_requests = "10"
+    }
+
+    container {
+      name   = "fastapi"
+      image  = "${azurerm_container_registry.acr.login_server}/${var.image_name}:${var.image_tag}"
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "APP_NAME"
+        value = "FastAPI Portfolio"
+      }
+
+      env {
+        name  = "APP_VERSION"
+        value = var.image_tag
+      }
+
+      env {
+        name  = "DEBUG"
+        value = "false"
+      }
+
+      env {
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
+      }
+
+      env {
+        name        = "SECRET_KEY"
+        secret_name = "secret-key"
+      }
+    }
+  }
+
+  # Expose api publicly.
+  ingress {
+    external_enabled = true
+    target_port      = 8000
+    transport        = "auto"
+    allow_insecure_connections = false
+
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+
+  depends_on = [
+    azurerm_role_assignment.acr_pull,
+    azurerm_postgresql_flexible_server_database.main
+  ]
   tags = var.tags
 }
