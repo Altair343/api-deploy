@@ -25,7 +25,7 @@ resource "azurerm_subnet" "container_apps" {
   name                 = "container-apps-subnet"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes = ["10.0.0.0/27"]
+  address_prefixes     = ["10.0.0.0/27"]
 
   delegation {
     name = "container-apps-delegation"
@@ -66,9 +66,9 @@ resource "azurerm_private_dns_zone" "postgres" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
-  name                  = "${var.project_name}-dns-link"
+  name                = "${var.project_name}-dns-link"
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
-  virtual_network_id    = azurerm_virtual_network.main.id
+  virtual_network_id  = azurerm_virtual_network.main.id
 }
 
 # Create server postgresql
@@ -77,7 +77,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
 
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  version = "16"
+  version             = "16"
 
   administrator_login    = var.db_admin
   administrator_password = var.db_password
@@ -88,8 +88,8 @@ resource "azurerm_postgresql_flexible_server" "main" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
 
-  delegated_subnet_id = azurerm_subnet.postgres.id
-  private_dns_zone_id = azurerm_private_dns_zone.postgres.id
+  delegated_subnet_id           = azurerm_subnet.postgres.id
+  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
   public_network_access_enabled = false
 
   authentication {
@@ -113,7 +113,7 @@ resource "azurerm_postgresql_flexible_server_database" "main" {
 
 # Azure Container Registry (ACR). A private repository for storing Docker images.
 resource "azurerm_container_registry" "acr" {
-  name = "${var.project_name}${random_string.suffix.result}"
+  name                = "${var.project_name}${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "Basic"
@@ -138,11 +138,11 @@ resource "azurerm_role_assignment" "acr_pull" {
 
 # A Container Apps Environment groups together the applications that will run in the same environment.
 resource "azurerm_container_app_environment" "main" {
-  name = "${var.project_name}-environment"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  name                     = "${var.project_name}-environment"
+  location                 = azurerm_resource_group.main.location
+  resource_group_name      = azurerm_resource_group.main.name
   infrastructure_subnet_id = azurerm_subnet.container_apps.id
-  zone_redundancy_enabled = false
+  zone_redundancy_enabled  = false
   # logs_destination = "azure-monitor"
 
   workload_profile {
@@ -174,7 +174,7 @@ resource "azurerm_container_app" "api" {
   }
 
   registry {
-    server = azurerm_container_registry.acr.login_server
+    server   = azurerm_container_registry.acr.login_server
     identity = azurerm_user_assigned_identity.container_app.id
   }
 
@@ -234,9 +234,9 @@ resource "azurerm_container_app" "api" {
 
   # Expose api publicly.
   ingress {
-    external_enabled = true
-    target_port      = 8000
-    transport        = "auto"
+    external_enabled           = true
+    target_port                = 8000
+    transport                  = "auto"
     allow_insecure_connections = false
 
     traffic_weight {
