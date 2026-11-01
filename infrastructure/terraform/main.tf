@@ -105,3 +105,13 @@ resource "azurerm_postgresql_flexible_server_database" "main" {
   charset   = "UTF8"
   collation = "en_US.utf8"
 }
+
+# Azure Container Registry (ACR). A private repository for storing Docker images.
+resource "azurerm_container_registry" "acr" {
+  name = "${var.project_name}${random_string.suffix.result}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  sku                 = "Basic"
+  admin_enabled       = false
+  tags                = var.tags
+}
