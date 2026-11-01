@@ -70,3 +70,38 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
   virtual_network_id    = azurerm_virtual_network.main.id
 }
+
+# Create server postgresql
+resource "azurerm_postgresql_flexible_server" "main" {
+  name = "${var.project_name}-pg-${random_string.suffix.result}"
+
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  version = "16"
+
+  administrator_login    = var.db_admin
+  administrator_password = var.db_password
+
+  sku_name   = "B_Standard_B1ms"
+  storage_mb = 32768
+
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false
+
+  delegated_subnet_id = azurerm_subnet.postgres.id
+  private_dns_zone_id = azurerm_private_dns_zone.postgres.id
+  public_network_access_enabled = false
+
+  depends_on = [
+    azurerm_private_dns_zone_virtual_network_link.postgres
+  ]
+  tags = var.tags
+}
+
+# Create database
+resource "azurerm_postgresql_flexible_server_database" "main" {
+  name      = var.db_name
+  server_id = azurerm_postgresql_flexible_server.main.id
+  charset   = "UTF8"
+  collation = "en_US.utf8"
+}
