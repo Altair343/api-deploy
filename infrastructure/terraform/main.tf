@@ -130,3 +130,20 @@ resource "azurerm_role_assignment" "acr_pull" {
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.container_app.principal_id
 }
+
+# A Container Apps Environment groups together the applications that will run in the same environment.
+resource "azurerm_container_app_environment" "main" {
+  name = "${var.project_name}-environment"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  infrastructure_subnet_id = azurerm_subnet.container_apps.id
+  zone_redundancy_enabled = false
+  # logs_destination = "azure-monitor"
+
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+  }
+
+  tags = var.tags
+}
