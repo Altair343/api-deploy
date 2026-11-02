@@ -27,6 +27,7 @@ async def test_create_user_with_duplicate_email():
     data = UserCreate(
         email="test@example.com",
         full_name="Test User",
+        password="testPassword123!",
     )
 
     with pytest.raises(UserAlreadyExistsError):

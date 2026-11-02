@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = Field(default=5, ge=1)
     DB_MAX_OVERFLOW: int = Field(default=5, ge=0)
 
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, gt=0)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

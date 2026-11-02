@@ -1,9 +1,9 @@
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import UserAlreadyExistsError
 from app.models.user import User
+from app.core.security import hash_password
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
 
@@ -24,9 +24,12 @@ class UserService:
                         "Email already registered 1"
                     )
 
+                hashed_password = hash_password(data.password)
+
                 user = await self.repository.create(
                     email=str(data.email),
                     full_name=data.full_name,
+                    hashed_password=hashed_password,
                 )
 
             await self.session.refresh(user)

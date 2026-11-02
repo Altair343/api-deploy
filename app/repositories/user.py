@@ -12,23 +12,21 @@ class UserRepository:
 
     async def get_by_email(self, email: str) -> User | None:
         statement = select(User).where(User.email == email)
-
         result = await self.session.scalar(statement)
-
         return result
 
     async def create(
         self,
         email: str,
         full_name: str,
+        hashed_password: str,
     ) -> User:
         user = User(
             email=email,
             full_name=full_name,
+            hashed_password=hashed_password,
         )
 
         self.session.add(user)
-
         await self.session.flush()
-
         return user
