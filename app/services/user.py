@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import UserAlreadyExistsError
 from app.models.user import User
-from app.core.security import hash_password
+from app.core.security import hash_password_async
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
 
@@ -13,6 +13,7 @@ class UserService:
         self.repository = UserRepository(session)
 
     async def create_user(self, data: UserCreate) -> User:
+        hashed_password = await hash_password_async(data.password)
         try:
             async with self.session.begin():
                 existing = await self.repository.get_by_email(
@@ -24,15 +25,13 @@ class UserService:
                         "Email already registered 1"
                     )
 
-                hashed_password = hash_password(data.password)
-
                 user = await self.repository.create(
                     email=str(data.email),
                     full_name=data.full_name,
                     hashed_password=hashed_password,
                 )
 
-            await self.session.refresh(user)
+            # await self.session.refresh(user)
             return user
 
         except IntegrityError as exc:

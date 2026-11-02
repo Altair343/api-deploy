@@ -1,10 +1,15 @@
 from datetime import datetime, timedelta, timezone
+import anyio
 import jwt
 from pwdlib import PasswordHash
+from anyio import CapacityLimiter
 from app.core.config import get_settings
 
 password_hash = PasswordHash.recommended()
 
+# Maximum number of concurrent Argon2 operations
+# per application process.
+argon2_limiter = CapacityLimiter(2)
 
 def hash_password(password: str) -> str:
     """
@@ -12,11 +17,13 @@ def hash_password(password: str) -> str:
     """
     return password_hash.hash(password)
 
+# Valid Argon2id hash of a dummy password.
+# It does not represent a real account.
+DUMMY_PASSWORD_HASH = hash_password(
+    "dummy-password-never-used-for-login"
+)
 
-def verify_password(
-    plain_password: str,
-    hashed_password: str,
-) -> bool:
+def verify_password( plain_password: str, hashed_password: str) -> bool:
     """
     Verify a password against its stored hash.
     """
@@ -25,6 +32,20 @@ def verify_password(
         hashed_password,
     )
 
+async def hash_password_async(password: str) -> str:
+    return await anyio.to_thread.run_sync(
+        hash_password,
+        password,
+        limiter=argon2_limiter,
+    )
+
+async def verify_password_async( plain_password: str, hashed_password: str) -> bool:
+    return await anyio.to_thread.run_sync(
+        verify_password,
+        plain_password,
+        hashed_password,
+        limiter=argon2_limiter,
+    )
 
 def create_access_token(user_id: int) -> str:
     """
