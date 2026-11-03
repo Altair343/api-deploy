@@ -6,6 +6,10 @@ from pwdlib import PasswordHash
 from anyio import CapacityLimiter
 from app.core.config import get_settings
 
+from dataclasses import dataclass
+from jwt import InvalidTokenError
+from app.core.exceptions import InvalidAccessTokenError
+
 password_hash = PasswordHash.recommended()
 
 # Maximum number of concurrent Argon2 operations
@@ -74,37 +78,46 @@ def create_access_token( user_id: int, session_id: UUID) -> str:
         algorithm=settings.JWT_ALGORITHM,
     )
 
-def decode_access_token(token: str) -> int:
+@dataclass(frozen=True)
+class AccessTokenPayload:
+    user_id: int
+    session_id: UUID
+
+def decode_access_token(token: str) -> AccessTokenPayload:
     """
     Validate an access token and return its user ID.
-
     Raises jwt.InvalidTokenError when validation fails.
     """
     settings = get_settings()
 
-    payload = jwt.decode(
-        token,
-        settings.SECRET_KEY,
-        algorithms=["HS256"],
-        options={
-            "require": ["sub", "iat", "exp", "type"],
-        },
-    )
-
-    if payload.get("type") != "access":
-        raise jwt.InvalidTokenError(
-            "Invalid token type"
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+            options={
+                "require": ["sub", "iat", "exp", "type","sid"],
+            },
         )
 
-    subject = payload["sub"]
+        if payload.get("type") != "access":
+            raise InvalidAccessTokenError()
 
-    if (
-        not isinstance(subject, str)
-        or not subject.isdecimal()
-        or int(subject) <= 0
-    ):
-        raise jwt.InvalidTokenError(
-            "Invalid token subject"
+        user_id = int(payload["sub"])
+        session_id = UUID(payload["sid"])
+
+        if user_id <= 0:
+            raise InvalidAccessTokenError()
+
+        return AccessTokenPayload(
+            user_id=user_id,
+            session_id=session_id,
         )
 
-    return int(subject)
+    except (
+        InvalidTokenError,
+        ValueError,
+        TypeError,
+        KeyError,
+    ) as exc:
+        raise InvalidAccessTokenError() from exc

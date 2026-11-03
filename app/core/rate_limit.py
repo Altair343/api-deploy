@@ -4,6 +4,7 @@ import hmac
 import math
 from redis.asyncio import (Redis,RedisCluster)
 from app.core.config import get_settings
+from app.core.exceptions import RateLimitExceeded
 
 RATE_LIMIT_SCRIPT = """
 local current = redis.call("INCR", KEYS[1])
@@ -13,12 +14,6 @@ end
 local ttl = redis.call("PTTL", KEYS[1])
 return {current, ttl}
 """
-
-class RateLimitExceeded(Exception):
-    def __init__(self, retry_after: int):
-        self.retry_after = retry_after
-        super().__init__("Rate limit exceeded")
-
 
 class LoginRateLimiter:
     def __init__(self, redis: RedisCluster):

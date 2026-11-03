@@ -7,9 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.refresh_tokens import (generate_refresh_token, hash_refresh_token)
 from app.models.user_session import UserSession
-
-class InvalidRefreshTokenError(Exception):
-    pass
+from app.core.exceptions import InvalidRefreshTokenError
 
 class SessionService:
     def __init__(self, session: AsyncSession):
@@ -76,3 +74,19 @@ class SessionService:
         user_session = result.scalar_one_or_none()
         if user_session is not None:
             user_session.revoked_at = datetime.now(timezone.utc)
+
+    async def get_active_session(self, session_id: UUID, user_id: int) -> UserSession | None:
+        now = datetime.now(timezone.utc)
+
+        result = await self.session.execute(
+            select(UserSession)
+            .where(
+                UserSession.id == session_id,
+                UserSession.user_id == user_id,
+                UserSession.revoked_at.is_(None),
+                UserSession.expires_at > now,
+            )
+        )
+
+        return result.scalar_one_or_none()
+

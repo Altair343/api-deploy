@@ -13,11 +13,7 @@ from app.core.security import hash_password_async
 from app.models.password_reset import PasswordResetToken
 from app.models.user import User
 from app.services.email.base import EmailSender
-
-
-class InvalidResetTokenError(Exception):
-    pass
-
+from app.core.exceptions import InvalidResetTokenError
 
 class PasswordResetService:
     def __init__(self, session: AsyncSession, email_sender: EmailSender) -> None:
@@ -160,3 +156,6 @@ class PasswordResetService:
                 )
                 .values(used_at=now)
             )
+
+            # TODO: Close all sessions
+            # .............
