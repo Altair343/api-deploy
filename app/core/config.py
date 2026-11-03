@@ -2,6 +2,7 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
+from typing import Literal
 
 class Settings(BaseSettings):
     APP_NAME: str = "My API"
@@ -28,6 +29,10 @@ class Settings(BaseSettings):
 
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, gt=0)
+
+    APP_ENV: Literal["development", "test", "production"] = "development"
+    PASSWORD_RESET_EXPIRE_MINUTES: int = Field(default=15,ge=1,le=60)
+    PASSWORD_RESET_URL: str = ("http://localhost:3000/reset-password")
 
     model_config = SettingsConfigDict(
         env_file=".env",
