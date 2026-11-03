@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     PASSWORD_RESET_ATTEMPT_LIMIT_IP: int = Field(default=10, ge=1)
     PASSWORD_RESET_WINDOW_SECONDS: int = Field(default=900, ge=1)
 
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, ge=1)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, ge=1)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

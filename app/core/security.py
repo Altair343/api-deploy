@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import anyio
 import jwt
+from uuid import UUID
 from pwdlib import PasswordHash
 from anyio import CapacityLimiter
 from app.core.config import get_settings
@@ -47,7 +48,7 @@ async def verify_password_async( plain_password: str, hashed_password: str) -> b
         limiter=argon2_limiter,
     )
 
-def create_access_token(user_id: int) -> str:
+def create_access_token( user_id: int, session_id: UUID) -> str:
     """
     Create a signed JWT access token.
     """
@@ -62,8 +63,9 @@ def create_access_token(user_id: int) -> str:
     payload = {
         "sub": str(user_id),
         "iat": now,
+        "sid": str(session_id),
         "exp": expires_at,
-        "type": "access",
+        "type": "access"
     }
 
     return jwt.encode(
@@ -71,7 +73,6 @@ def create_access_token(user_id: int) -> str:
         settings.SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
     )
-
 
 def decode_access_token(token: str) -> int:
     """
