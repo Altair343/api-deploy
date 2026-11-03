@@ -4,12 +4,14 @@ from fastapi import FastAPI
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.db.session import engine
+from app.core.redis import close_redis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        await close_redis()
         await engine.dispose()
 
 app = FastAPI(

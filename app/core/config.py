@@ -9,6 +9,13 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     SECRET_KEY: str
 
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 10000
+    REDIS_PASSWORD: str
+    LOGIN_RATE_LIMIT_IP: int = Field(default=10, ge=1)
+    LOGIN_RATE_LIMIT_ACCOUNT: int = Field(default=5, ge=1)
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=300, ge=1)
+
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
