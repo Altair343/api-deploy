@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import math
 import time
-from redis.asyncio import Redis
+from redis.asyncio import (Redis,RedisCluster)
 from app.core.config import get_settings
 
 RATE_LIMIT_SCRIPT = """
@@ -22,7 +22,7 @@ class RateLimitExceeded(Exception):
 
 
 class LoginRateLimiter:
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: RedisCluster):
         self.redis = redis
         self.settings = get_settings()
 
