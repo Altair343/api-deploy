@@ -81,26 +81,42 @@ class PasswordResetService:
     async def reset_password(self, token: str, new_password: str) -> None:
         token_hash = hash_reset_token(token)
 
-        # Argon2 is CPU-intensive; calculate outside
-        # the database transaction.
-        new_hash = await hash_password_async(new_password)
-
+        # Preliminary validation.
+        # Use a short-lived independent session/transaction
+        # or explicitly end the read transaction before
+        # entering the write transaction.
         async with self.session.begin():
-            # Find the token's owner.
-            lookup = await self.session.execute(
-                select(PasswordResetToken.user_id)
-                .where(
-                    PasswordResetToken.token_hash
-                    == token_hash
+            result = await self.session.execute(
+                select(
+                    PasswordResetToken.user_id,
+                    PasswordResetToken.expires_at,
+                    PasswordResetToken.used_at,
+                ).where(
+                    PasswordResetToken.token_hash == token_hash
                 )
             )
 
-            user_id = lookup.scalar_one_or_none()
+            reset_data = result.one_or_none()
 
-            if user_id is None:
+            if reset_data is None:
                 raise InvalidResetTokenError()
 
-            # Serialize resets for the same user.
+            now = datetime.now(timezone.utc)
+
+            if (
+                reset_data.used_at is not None
+                or reset_data.expires_at <= now
+            ):
+                raise InvalidResetTokenError()
+
+            user_id = reset_data.user_id
+
+        # Expensive operation outside transaction.
+        new_hash = await hash_password_async(new_password)
+
+        # Begin authoritative transaction.
+        async with self.session.begin():
+            # Lock user to serialize resets for this account.
             user_result = await self.session.execute(
                 select(User)
                 .where(User.id == user_id)
@@ -112,12 +128,12 @@ class PasswordResetService:
             if user is None or not user.is_active:
                 raise InvalidResetTokenError()
 
-            # Re-read the token after acquiring the lock.
+            # Revalidate the token after acquiring the lock.
             token_result = await self.session.execute(
                 select(PasswordResetToken)
                 .where(
-                    PasswordResetToken.token_hash
-                    == token_hash
+                    PasswordResetToken.token_hash == token_hash,
+                    PasswordResetToken.user_id == user.id,
                 )
                 .with_for_update()
             )
@@ -129,10 +145,10 @@ class PasswordResetService:
                 reset is None
                 or reset.used_at is not None
                 or reset.expires_at <= now
-                or reset.user_id != user.id
             ):
                 raise InvalidResetTokenError()
 
+            # Update password.
             user.hashed_password = new_hash
 
             # Invalidate all outstanding reset tokens.
