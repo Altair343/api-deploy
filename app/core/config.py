@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     APP_ENV: Literal["development", "test", "production"] = "development"
     PASSWORD_RESET_EXPIRE_MINUTES: int = Field(default=15,ge=1,le=60)
     PASSWORD_RESET_URL: str = ("http://localhost:3000/reset-password")
+    PASSWORD_RESET_REQUEST_LIMIT_IP: int = Field(default=5, ge=1)
+    PASSWORD_RESET_REQUEST_LIMIT_ACCOUNT: int = Field(default=3, ge=1)
+    PASSWORD_RESET_ATTEMPT_LIMIT_IP: int = Field(default=10, ge=1)
+    PASSWORD_RESET_WINDOW_SECONDS: int = Field(default=900, ge=1)
 
     model_config = SettingsConfigDict(
         env_file=".env",

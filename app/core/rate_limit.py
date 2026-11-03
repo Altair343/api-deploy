@@ -2,7 +2,6 @@
 import hashlib
 import hmac
 import math
-import time
 from redis.asyncio import (Redis,RedisCluster)
 from app.core.config import get_settings
 
@@ -72,4 +71,65 @@ class LoginRateLimiter:
             key=self._account_key(email),
             limit=self.settings.LOGIN_RATE_LIMIT_ACCOUNT,
             window_seconds=self.settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+        )
+
+class PasswordResetRateLimiter:
+    def __init__(self, redis: RedisCluster):
+        self.redis = redis
+        self.settings = get_settings()
+
+    async def _check(
+        self,
+        key: str,
+        limit: int,
+    ) -> None:
+        count, ttl_ms = await self.redis.eval(
+            RATE_LIMIT_SCRIPT,
+            1,
+            key,
+            self.settings.PASSWORD_RESET_WINDOW_SECONDS
+            * 1000,
+        )
+
+        if count > limit:
+            raise RateLimitExceeded(
+                max(1, math.ceil(ttl_ms / 1000))
+            )
+
+    def _account_key(self, email: str) -> str:
+        normalized = email.strip().lower()
+
+        digest = hmac.new(
+            self.settings.SECRET_KEY.encode(),
+            normalized.encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        return (
+            "rate_limit:password_reset:account:"
+            f"{digest}"
+        )
+
+    async def check_request(
+        self,
+        ip_address: str,
+        email: str,
+    ) -> None:
+        await self._check(
+            f"rate_limit:password_reset:request:ip:{ip_address}",
+            self.settings.PASSWORD_RESET_REQUEST_LIMIT_IP,
+        )
+
+        await self._check(
+            self._account_key(email),
+            self.settings.PASSWORD_RESET_REQUEST_LIMIT_ACCOUNT,
+        )
+
+    async def check_reset(
+        self,
+        ip_address: str,
+    ) -> None:
+        await self._check(
+            f"rate_limit:password_reset:attempt:ip:{ip_address}",
+            self.settings.PASSWORD_RESET_ATTEMPT_LIMIT_IP,
         )

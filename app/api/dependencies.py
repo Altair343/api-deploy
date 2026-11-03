@@ -1,7 +1,6 @@
 from typing import Annotated
 import jwt
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
@@ -15,7 +14,7 @@ from app.core.security import decode_access_token
 from app.models.user import User
 from app.repositories.user import UserRepository
 
-from app.core.rate_limit import LoginRateLimiter
+from app.core.rate_limit import (LoginRateLimiter, PasswordResetRateLimiter)
 from app.core.redis import redis_client
 
 SessionDep = Annotated[
@@ -52,6 +51,14 @@ async def get_current_user( token: Annotated[str, Depends(oauth2_scheme)], sessi
         raise credentials_exception
 
     return user
+
+def get_password_reset_rate_limiter() -> PasswordResetRateLimiter:
+    return PasswordResetRateLimiter(redis_client)
+
+PasswordResetRateLimiterDep = Annotated[
+    PasswordResetRateLimiter,
+    Depends(get_password_reset_rate_limiter),
+]
 
 UserServiceDep = Annotated[
     UserService,
