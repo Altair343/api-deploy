@@ -9,3 +9,16 @@ image_tag  = "1.0.0"
 db_name    = "fastapidb"
 db_admin   = "apiadmin"
 db_password = "00000000Ab_"
+
+access_token_expire_minutes = 30
+login_rate_limit_ip = 10
+login_rate_limit_account = 5
+login_rate_limit_window_seconds = 300
+app_env = "development"
+password_reset_expire_minutes = 15
+password_reset_url = "http://localhost:3000/reset-password"
+password_reset_request_limit_ip = 5
+password_reset_request_limit_account = 3
+password_reset_attempt_limit_ip = 10
+password_reset_window_seconds = 900
+refresh_token_expire_days = 7

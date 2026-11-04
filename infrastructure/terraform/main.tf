@@ -77,7 +77,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
 
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  version             = "16"
+  version             = "17"
 
   administrator_login    = var.db_admin
   administrator_password = var.db_password
@@ -109,6 +109,30 @@ resource "azurerm_postgresql_flexible_server_database" "main" {
   server_id = azurerm_postgresql_flexible_server.main.id
   charset   = "UTF8"
   collation = "en_US.utf8"
+
+  # prevent the possibility of accidental data loss
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Redis
+resource "azurerm_managed_redis" "main" {
+  name                      = "${var.project_name}-redis-${random_string.suffix.result}"
+  resource_group_name       = azurerm_resource_group.main.name
+  location                  = azurerm_resource_group.main.location
+  sku_name                  = "Balanced_B0"
+  high_availability_enabled = false
+  public_network_access     = "Enabled"
+
+  default_database {
+    access_keys_authentication_enabled = true
+    client_protocol                    = "Encrypted"
+    clustering_policy                  = "OSSCluster"
+    eviction_policy                    = "VolatileLRU"
+  }
+
+  tags = var.tags
 }
 
 # Azure Container Registry (ACR). A private repository for storing Docker images.
@@ -163,7 +187,7 @@ resource "azurerm_container_app" "api" {
   revision_mode                = "Single"
   workload_profile_name        = "Consumption"
 
-  # They assign the managed identity to the application and indicate 
+  # They assign the managed identity to the application and indicate
   # that it should be used to authenticate with ACR.
   identity {
     type = "UserAssigned"
@@ -184,12 +208,6 @@ resource "azurerm_container_app" "api" {
     value = "postgresql://${var.db_admin}:${var.db_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${var.db_name}?sslmode=require"
   }
 
-  secret {
-    name  = "secret-key"
-    value = var.app_secret
-  }
-
-
   template {
     min_replicas = 0
     max_replicas = 1
@@ -207,27 +225,99 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "APP_NAME"
-        value = "FastAPI Portfolio"
+        value = var.project_name
       }
-
       env {
         name  = "APP_VERSION"
         value = var.image_tag
       }
-
       env {
         name  = "DEBUG"
         value = "false"
       }
-
       env {
-        name        = "DATABASE_URL"
-        secret_name = "database-url"
+        name  = "ACCESS_TOKEN_EXPIRE_MINUTES"
+        value = var.access_token_expire_minutes
       }
-
+      env {
+        name  = "DB_HOST"
+        value = azurerm_postgresql_flexible_server.main.fqdn
+      }
+      env {
+        name  = "DB_PORT"
+        value = 5432
+      }
+      env {
+        name  = "DB_NAME"
+        value = var.db_name
+      }
+      env {
+        name  = "DB_USER"
+        value = var.db_admin
+      }
+      env {
+        name  = "DB_PASSWORD"
+        value = var.db_password
+      }
+      env {
+        name  = "REDIS_HOST"
+        value = azurerm_managed_redis.main.hostname
+      }
+      env {
+        name  = "REDIS_PORT"
+        value = azurerm_managed_redis.main.default_database[0].port
+      }
+      env {
+        name  = "REDIS_PASSWORD"
+        value = azurerm_managed_redis.main.default_database[0].primary_access_key
+      }
+      env {
+        name  = "LOGIN_RATE_LIMIT_IP"
+        value = var.login_rate_limit_ip
+      }
+      env {
+        name  = "LOGIN_RATE_LIMIT_ACCOUNT"
+        value = var.login_rate_limit_account
+      }
+      env {
+        name  = "LOGIN_RATE_LIMIT_WINDOW_SECONDS"
+        value = var.login_rate_limit_window_seconds
+      }
+      env {
+        name  = "APP_ENV"
+        value = var.app_env
+      }
+      env {
+        name  = "PASSWORD_RESET_EXPIRE_MINUTES"
+        value = var.password_reset_expire_minutes
+      }
+      env {
+        name  = "PASSWORD_RESET_URL"
+        value = var.password_reset_url
+      }
+      env {
+        name  = "PASSWORD_RESET_REQUEST_LIMIT_IP"
+        value = var.password_reset_request_limit_ip
+      }
+      env {
+        name  = "PASSWORD_RESET_REQUEST_LIMIT_ACCOUNT"
+        value = var.password_reset_request_limit_account
+      }
+      env {
+        name  = "PASSWORD_RESET_ATTEMPT_LIMIT_IP"
+        value = var.password_reset_attempt_limit_ip
+      }
+      env {
+        name  = "PASSWORD_RESET_WINDOW_SECONDS"
+        value = var.password_reset_window_seconds
+      }
+      env {
+        name  = "REFRESH_TOKEN_EXPIRE_DAYS"
+        value = var.refresh_token_expire_days
+      }
       env {
         name        = "SECRET_KEY"
-        secret_name = "secret-key"
+        secret_name = var.app_secret
       }
     }
   }

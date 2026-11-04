@@ -17,6 +17,10 @@ output "postgres_hostname" {
   description = "hostname postgres"
   value       = azurerm_postgresql_flexible_server.main.fqdn
 }
+output "postgres_db" {
+  description = "DB name"
+  value       = azurerm_postgresql_flexible_server_database.main.name
+}
 
 # During the first stage, count = 0 and these outputs are null.
 output "api_url" {

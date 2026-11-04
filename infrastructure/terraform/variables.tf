@@ -66,3 +66,63 @@ variable "db_password" {
   description = "Database password"
   type        = string
 }
+
+variable "access_token_expire_minutes" {
+  description = "Tiempo en que expira el token"
+  type        = string
+}
+
+variable "login_rate_limit_ip" {
+  description = ""
+  type        = string
+}
+
+variable "login_rate_limit_account" {
+  description = ""
+  type        = string
+}
+
+variable "login_rate_limit_window_seconds" {
+  description = ""
+  type        = string
+}
+
+variable "app_env" {
+  description = ""
+  type        = string
+}
+
+variable "password_reset_expire_minutes" {
+  description = ""
+  type        = string
+}
+
+variable "password_reset_url" {
+  description = ""
+  type        = string
+}
+
+variable "password_reset_request_limit_ip" {
+  description = ""
+  type        = string
+}
+
+variable "password_reset_request_limit_account" {
+  description = ""
+  type        = string
+}
+
+variable "password_reset_attempt_limit_ip" {
+  description = ""
+  type        = string
+}
+
+variable "password_reset_window_seconds" {
+  description = ""
+  type        = string
+}
+
+variable "refresh_token_expire_days" {
+  description = ""
+  type        = string
+}
