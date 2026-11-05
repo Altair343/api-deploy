@@ -1,7 +1,9 @@
 # api-deploy
 ## Installation
 ### 1. Run locally
-You need Python 3.12 or later and PostgreSQL 17
+You need:
+- Python 3.12 or later
+- PostgreSQL 17
 
 1.1 Create a database
 For example:
@@ -33,6 +35,9 @@ uvicorn app.main:app --reload
 ```
 
 ### 2. Run locally with Docker Compose
+You need:
+- Docker
+
 From the project root
 
 1.1 Build the project image.
@@ -72,6 +77,11 @@ This will create the tables. You can now exit the container.
 - Process status: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
 ## Deploy to Azure with Terraform
+You need:
+- Terraform
+- Docker
+- azure-cli
+
 1.1 Navigate to infrastructure/terraform: <br>
 
 1.2 Copy `terraform.tfvars.example` to `terraform.tfvars` <br><br>
