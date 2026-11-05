@@ -10,11 +10,13 @@ def remap_address( address: tuple[str, int]) -> tuple[str, int]:
 # redis_client = Redis(
 #     host=settings.REDIS_HOST,
 #     port=settings.REDIS_PORT,
-#     password=settings.REDIS_PASSWORD,
-#     ssl=True,
 #     decode_responses=True,
 #     socket_connect_timeout=10,
 #     socket_timeout=10,
+
+#     # For local development, comment out the password and set SSL to False.
+#     password=settings.REDIS_PASSWORD,
+#     ssl=True,
 # )
 
 redis_client = RedisCluster(

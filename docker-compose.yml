@@ -25,7 +25,7 @@ services:
     networks:
       - api_network
     volumes:
-      - postgres_data_library:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -51,3 +51,6 @@ services:
 networks:
   api_network:
     driver: bridge
+
+volumes:
+  postgres_data:
