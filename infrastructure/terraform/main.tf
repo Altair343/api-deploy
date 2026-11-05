@@ -112,7 +112,7 @@ resource "azurerm_postgresql_flexible_server_database" "main" {
 
   # prevent the possibility of accidental data loss
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
@@ -200,12 +200,6 @@ resource "azurerm_container_app" "api" {
   registry {
     server   = azurerm_container_registry.acr.login_server
     identity = azurerm_user_assigned_identity.container_app.id
-  }
-
-
-  secret {
-    name  = "database-url"
-    value = "postgresql://${var.db_admin}:${var.db_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/${var.db_name}?sslmode=require"
   }
 
   template {
@@ -317,7 +311,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name        = "SECRET_KEY"
-        secret_name = var.app_secret
+        value = var.app_secret
       }
     }
   }
