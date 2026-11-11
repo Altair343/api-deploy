@@ -33,6 +33,9 @@ class SessionService:
         return user_session, token
 
     async def rotate_refresh_token(self, refresh_token: str) -> tuple[UserSession, str]:
+        if not 1 <= len(refresh_token) <= 512:
+            raise InvalidRefreshTokenError()
+
         token_hash = hash_refresh_token(refresh_token)
 
         result = await self.session.execute(

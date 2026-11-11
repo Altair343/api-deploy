@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# Evitar archivos .pyc y permitir visualizar logs inmediatamente
+# Avoid .pyc files and allow logs to be viewed immediately
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 

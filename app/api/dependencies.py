@@ -12,7 +12,6 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.core.security import (decode_access_token, InvalidAccessTokenError)
 from app.models.user import User
-from app.repositories.user import UserRepository
 
 from app.core.rate_limit import (LoginRateLimiter, PasswordResetRateLimiter)
 from app.core.redis import redis_client
