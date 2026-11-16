@@ -74,6 +74,7 @@ This will create the tables. You can now exit the container.
 
 ## Verify the local API
 - Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Doc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 - Process status: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
 ## Deploy to Azure with Terraform
@@ -175,4 +176,9 @@ postgres_db = "fastapidb"
 postgres_hostname = "fastapi-pg-yrs7u8.postgres.demo.az"
 resource_group_name = "fastapi-rg"
 swagger_url = "https://fastapi-api.demo.io/docs"
+```
+
+# Initialize Alembic
+```powershell
+python -m alembic init -t async alembic
 ```
